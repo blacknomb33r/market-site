@@ -28,6 +28,33 @@ const MarketBar = dynamic(() => import('./components/MarketBar'), {
   ),
 });
 
+function formatValue(name: string, value: number | null): string {
+  if (value == null) return "–";
+
+  // Rohstoffe (Oil, Gold, Silver, Platinum)
+  if (["WTI Oil", "Brent Oil", "Gold", "Silver", "Platinum"].includes(name)) {
+    return `$${value.toFixed(2)}`;
+  }
+
+  // Krypto (Bitcoin, Ethereum)
+  if (["Bitcoin", "Ethereum"].includes(name)) {
+    return `$${value.toFixed(2)}`;
+  }
+
+  // Yields → % mit 2 Nachkommastellen
+  if (name.includes("Yield")) {
+    return `${value.toFixed(2)}%`;
+  }
+
+  // FX → 4 Nachkommastellen (EUR/USD, USD/JPY, etc.)
+  if (name.includes("/") || name.includes("USD/")) {
+    return value.toFixed(4);
+  }
+
+  // Indizes → 2 Nachkommastellen
+  return value.toFixed(2);
+}
+
 export default function HomePage() {
   const [data, setData] = useState<ApiResp | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -120,7 +147,7 @@ async function load() {
                 return (
                 <div key={it.name} className="overview-chip">
                     <div className="overview-title">{it.name}</div>
-                    <div className="overview-value">{it.value ?? '–'}</div>
+                    <div className="overview-value">{formatValue(it.name, it.value)}</div>
                     <div className="overview-sub">
                     <span>Δ 1d: <b className={(d1 ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}>{d1Txt}</b></span>
                     <span>MTD: {mtdTxt}</span>
