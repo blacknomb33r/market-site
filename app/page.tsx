@@ -7,6 +7,8 @@ type Item = {
   name: string;
   value: number | null;
   delta1d: number | null;
+  mtd?: number | null;   // NEU (optional)
+  ytd?: number | null;   // NEU (optional)
 };
 
 type ApiResp = {
@@ -105,28 +107,29 @@ async function load() {
       )}
 
       {!loading && data?.items && (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {data.items.map((it) => (
-              <div key={it.name} className="card">
-                <h2>{it.name}</h2>
-                <div className="value">{it.value ?? '–'}</div>
-                <div
-                  className={`delta ${
-                    (it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  {it.delta1d != null
-                    ? `${it.delta1d > 0 ? '+' : ''}${it.delta1d}% (1d)`
-                    : '–'}
+        <div className="overview-grid">
+            {data.items.map((it) => {
+                const d1 = it.delta1d;
+                const mtd = it.mtd;
+                const ytd = it.ytd;
+
+                const d1Txt  = d1  != null ? `${d1 > 0 ? '+' : ''}${d1}%`   : '–';
+                const mtdTxt = mtd != null ? `${mtd > 0 ? '+' : ''}${mtd}%` : '–';
+                const ytdTxt = ytd != null ? `${ytd > 0 ? '+' : ''}${ytd}%` : '–';
+
+                return (
+                <div key={it.name} className="overview-chip">
+                    <div className="overview-title">{it.name}</div>
+                    <div className="overview-value">{it.value ?? '–'}</div>
+                    <div className="overview-sub">
+                    <span>Δ 1d: <b className={(d1 ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}>{d1Txt}</b></span>
+                    <span>MTD: {mtdTxt}</span>
+                    <span>YTD: {ytdTxt}</span>
+                    </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-xs opacity-70">
-            Stand: {data.asOf ?? '–'} • Yahoo Finance (verzögert)
-          </p>
-        </>
+                );
+            })}
+            </div>
       )}
     </main>
   );
