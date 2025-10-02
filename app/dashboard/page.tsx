@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import MarketBar from './components/MarketBar';
+import MarketBar from '../components/MarketBar';
 
 type Item = {
   name: string;
@@ -47,7 +47,7 @@ export default function HomePage() {
       <h1 className="text-2xl font-bold mb-4">📊 Daily Market Dashboard</h1>
 
       {/* Horizontale Börsenzeiten-Leiste (fest auf Europe/Berlin) */}
-      <Markebar />
+      <MarketBar />
 
       <h2 className="section-title">Quick Overview</h2>
 
