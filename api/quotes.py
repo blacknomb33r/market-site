@@ -26,13 +26,16 @@ class handler(BaseHTTPRequestHandler):
 
         TICKERS = {
             "S&P 500": "^GSPC",
+            "Nasdaq": "^IXIC",
             "DAX": "^GDAXI",
             "EuroStoxx50": "^STOXX50E",
             "HangSeng": "^HSI",
             "Nikkei225": "^N225",
-            "WTI Oil": "CL=F",
+            "WTI Oil (US)": "CL=F",
+            "Brent Oil (EU)": "BZ=F",
             "Gold": "GC=F",
             "Bitcoin": "BTC-USD",
+            "Ethereum": "ETH-USD",
             "VIX": "^VIX",
         }
 

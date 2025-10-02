@@ -116,7 +116,7 @@ async function load() {
                 const d1Txt  = d1  != null ? `${d1 > 0 ? '+' : ''}${d1}%`   : '–';
                 const mtdTxt = mtd != null ? `${mtd > 0 ? '+' : ''}${mtd}%` : '–';
                 const ytdTxt = ytd != null ? `${ytd > 0 ? '+' : ''}${ytd}%` : '–';
-
+            
                 return (
                 <div key={it.name} className="overview-chip">
                     <div className="overview-title">{it.name}</div>
@@ -131,6 +131,11 @@ async function load() {
             })}
             </div>
       )}
+    <p className="mt-3 text-xs opacity-70">
+    Stand: {data?.asOf ?? '–'} • Yahoo Finance (verzögert)
+    </p>
+
+    <div className="divider"></div>
     </main>
   );
 }
