@@ -211,9 +211,9 @@ useEffect(() => {
             </div>
       )}
     <p className="mt-3 text-xs opacity-70">
-    Stand: {data?.asOf ?? '–'} • Yahoo Finance
+    Stand: {data?.asOf ?? '–'}
       {lastRefresh && (
-        <> • aktualisiert: {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}</>
+        <> // {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})} -  Yahoo Finance</>
     )}
 </p>
 
