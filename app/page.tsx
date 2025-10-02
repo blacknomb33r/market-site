@@ -257,6 +257,12 @@ useEffect(() => { loadWatchlist(); }, []);
             })}
             </div>
       )}
+    <p className="mt-3 text-xs opacity-70">
+    Stand: {data?.asOf ?? '–'}
+      {lastRefresh && (
+        <> // {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})} -  Yahoo Finance</>
+    )}
+</p>
 
     <div className="divider"></div>
     {/* ==== Watchlist ==== */}
@@ -284,7 +290,14 @@ useEffect(() => { loadWatchlist(); }, []);
 
       {/* Deltas */}
       <div className="overview-sub mt-1">
-        <span>Δ 1d: <b className={(it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}>{fmtPct(it.delta1d)}</b></span>
+        <span>
+          Δ 1d:{' '}
+          <b
+            className={(it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}
+          >
+            {fmtPct(it.delta1d)}
+          </b>
+        </span>
         <span>MTD: {fmtPct(it.mtd)}</span>
         <span>YTD: {fmtPct(it.ytd)}</span>
       </div>
@@ -299,13 +312,6 @@ useEffect(() => { loadWatchlist(); }, []);
   ))}
   </div>
 )}
-    <div className="divider"></div>
-    <p className="mt-3 text-xs opacity-70">
-    Stand: {data?.asOf ?? '–'}
-      {lastRefresh && (
-        <> // {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})} -  Yahoo Finance</>
-    )}
-    </p>
     </main>
   );
 

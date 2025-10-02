@@ -6,7 +6,6 @@ from datetime import date, timedelta
 ALLOWED_ORIGIN = "*"
 
 class handler(BaseHTTPRequestHandler):
-    
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
         self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -32,8 +31,6 @@ class handler(BaseHTTPRequestHandler):
             "NVIDIA": "NVDA",
             "Tesla": "TSLA",
             "Auto1": "AG1.DE", 
-            "Meta": "META",
-            "Alphabet": "GOOGL",
         }
 
         def series_last(s):
