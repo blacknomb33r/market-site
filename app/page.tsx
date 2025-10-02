@@ -60,6 +60,13 @@ export default function HomePage() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+const [autoRefresh, setAutoRefresh] = useState<boolean>(() => {
+  if (typeof window === 'undefined') return true;
+  const v = window.localStorage.getItem('autoRefresh');
+  return v ? v === 'true' : true; // standard: an
+});
+const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
 async function load() {
     setLoading(true);
     setErr(null);
@@ -83,6 +90,7 @@ async function load() {
 
       if (!body) throw new Error(`Leere Antwort: ${raw?.slice(0,200)}`);
       setData(body);
+      setLastRefresh(new Date());   // NEU
     } catch (e: any) {
       console.error('quotes fetch failed:', e);
       setErr(e?.message ?? String(e));
@@ -91,7 +99,29 @@ async function load() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+useEffect(() => { load(); }, []);
+useEffect(() => {
+  window.localStorage.setItem('autoRefresh', String(autoRefresh));
+  if (!autoRefresh) return;
+
+  const id = setInterval(() => {
+    load();
+  }, 15 * 60 * 1000); // 15 Minuten
+
+  return () => clearInterval(id);
+}, [autoRefresh]);
+
+  // Reload, wenn Tab wieder sichtbar ist
+useEffect(() => {
+  const onVis = () => {
+    if (document.visibilityState !== 'visible') return;
+    if (!lastRefresh) { load(); return; }
+    const diff = Date.now() - lastRefresh.getTime();
+    if (diff > 5 * 60 * 1000) load(); // älter als 5 min -> reload
+  };
+  document.addEventListener('visibilitychange', onVis);
+  return () => document.removeEventListener('visibilitychange', onVis);
+}, [lastRefresh]);
 
   return (
     <main className="max-w-6xl mx-auto p-4">
@@ -100,7 +130,29 @@ async function load() {
       {/* Horizontale Börsenzeiten-Leiste (fest auf Europe/Berlin) */}
       <MarketBar />
 
+      <div className="flex items-center justify-between">
       <h2 className="section-title">Quick Overview</h2>
+
+      <div className="flex items-center gap-2">
+        <button
+          className="button"
+          onClick={() => load()}
+          title="Jetzt aktualisieren"
+          aria-label="Jetzt aktualisieren"
+        >
+          ↻ Refresh
+        </button>
+
+        <label className="text-sm muted" style={{display:'inline-flex', alignItems:'center', gap:6}}>
+          <input
+            type="checkbox"
+            checked={autoRefresh}
+            onChange={(e) => setAutoRefresh(e.target.checked)}
+          />
+          Auto(15min)
+        </label>
+      </div>
+    </div>
 
       {loading && <p>Lade Daten…</p>}
 
@@ -159,8 +211,11 @@ async function load() {
             </div>
       )}
     <p className="mt-3 text-xs opacity-70">
-    Stand: {data?.asOf ?? '–'} • Yahoo Finance (verzögert)
-    </p>
+    Stand: {data?.asOf ?? '–'} • Yahoo Finance
+      {lastRefresh && (
+        <> • aktualisiert: {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}</>
+    )}
+</p>
 
     <div className="divider"></div>
     </main>
