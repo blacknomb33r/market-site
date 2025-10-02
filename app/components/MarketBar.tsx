@@ -19,7 +19,8 @@ const MARKETS: Market[] = [
   { name: 'Xetra (Frankfurt)',tz: 'Europe/Berlin',    open: [9,0],   close: [17,30], days: [0,1,2,3,4] },
   { name: 'LSE (London)',     tz: 'Europe/London',    open: [8,0],   close: [16,30], days: [0,1,2,3,4] },
   { name: 'SIX (Zürich)',     tz: 'Europe/Zurich',    open: [9,0],   close: [17,30], days: [0,1,2,3,4] },
-  { name: 'Euronext Paris',   tz: 'Europe/Paris',     open: [9,0],   close: [17,30], days: [0,1,2,3,4] },
+  { name: 'Tokyo (TSE) ',     tz: 'Asia/Tokyo',       open: [9,0],   close: [15,0],  days: [0,1,2,3,4] },
+  { name: 'Hong Kong (HKEX)', tz: 'Asia/Hong_Kong',   open: [9,30],  close: [16,0], days: [0,1,2,3,4] },
   { name: 'Crypto (BTC/ETH)', tz: 'UTC',              open: [0,0],   close: [23,59], days: [0,1,2,3,4,5,6], alwaysOpen: true },
 ];
 

@@ -94,7 +94,7 @@ a:hover { text-decoration: underline; }
   scroll-snap-type: x proximity;
 }
 .market-chip {
-  min-width: 210px;
+  min-width: 150px;
   background: var(--chip-bg);
   border: 1px solid var(--border);
   border-radius: 12px;

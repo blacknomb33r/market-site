@@ -68,7 +68,7 @@ async function load() {
 
   return (
     <main className="max-w-6xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">📊 Daily Market Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-4">Daily Market Dashboard</h1>
 
       {/* Horizontale Börsenzeiten-Leiste (fest auf Europe/Berlin) */}
       <MarketBar />
