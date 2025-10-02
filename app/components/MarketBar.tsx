@@ -1,4 +1,4 @@
-console.log("MarketBar mounted");
+
 'use client';
 import {useEffect, useMemo, useState} from 'react';
 import { DateTime, Duration } from 'luxon';
@@ -39,6 +39,7 @@ function nextValidDay(dt: DateTime, validDays: number[]) {
 type View = { name: string; isOpen: boolean; statusText: 'Offen'|'Geschlossen'; hoursLocal: string; countdown: string };
 
 export default function MarketBar() {
+    console.log("MarketBar mounted");
   // Trigger für den Countdown – alle 30s reicht
   const [tick, setTick] = useState(0);
   useEffect(() => {
