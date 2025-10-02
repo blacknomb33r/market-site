@@ -34,6 +34,8 @@ class handler(BaseHTTPRequestHandler):
             "WTI Oil (US)": "CL=F",
             "Brent Oil (EU)": "BZ=F",
             "Gold": "GC=F",
+            "Silver": "SI=F",
+            "Platinum": "PL=F",
             "Bitcoin": "BTC-USD",
             "Ethereum": "ETH-USD",
             "VIX": "^VIX",
