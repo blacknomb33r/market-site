@@ -24,3 +24,37 @@ body {
 .card .delta {
   font-size: 0.85rem;
 }
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.5rem;
+}
+
+.market-bar {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 6px 2px 10px;
+}
+
+.market-chip {
+  min-width: 210px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.market-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.market-open  { color: #22c55e; font-weight: 700; } /* grün */
+.market-closed{ color: #ef4444; font-weight: 700; } /* rot  */
+
+.market-sub {
+  font-size: 12px;
+  opacity: 0.8;
+}

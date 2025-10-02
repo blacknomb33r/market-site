@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import MarketBar from './components/MarketBar';
 
 type Item = { name: string; value: number|null; delta1d: number|null; };
 type ApiResp = { asOf?: string; items?: Item[]; error?: string };
