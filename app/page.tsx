@@ -21,6 +21,8 @@ type WLItem = {
   ticker: string;
   price: number | null;
   delta1d: number | null;
+  mtd?: number | null;   // NEU (optional)
+  ytd?: number | null;
   marketCap?: number | null;
   pe?: number | null;
   volume?: number | null;
@@ -275,24 +277,39 @@ useEffect(() => { loadWatchlist(); }, []);
 
 {!wlLoading && wl?.items && (
   <div className="watchlist-grid">
-    {wl.items.map((it) => (
-      <div key={it.ticker} className="card" style={{ padding: '1rem' }}>
-        <h2 className="font-bold mb-1">{it.name} ({it.ticker})</h2>
-        <div className="value text-lg">
-          {it.price != null ? `${it.price} ${it.currency ?? ''}` : '–'}
-        </div>
-        <div
-          className={`delta ${
-            (it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
-          }`}
-        >
-          {fmtPct(it.delta1d)} (1d)
-        </div>
-        <div className="text-xs opacity-80 mt-2">
-          MC: {fmtUSDabbr(it.marketCap)} | P/E: {it.pe ?? '–'} | Vol: {fmtUSDabbr(it.volume)}
-        </div>
+  {wl.items.map((it) => (
+    <div key={it.ticker} className="card" style={{ padding: '1rem' }}>
+      <h2 className="font-bold mb-1">
+        {it.name} ({it.ticker})
+      </h2>
+
+      {/* Preis mit Währung */}
+      <div className="value text-lg">
+        {it.price != null ? `${it.price.toFixed(2)} ${it.currency ?? ''}` : '–'}
       </div>
-    ))}
+
+      {/* Deltas */}
+      <div className="overview-sub mt-1">
+        <span>
+          Δ 1d:{' '}
+          <b
+            className={(it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}
+          >
+            {fmtPct(it.delta1d)}
+          </b>
+        </span>
+        <span>MTD: {fmtPct(it.mtd)}</span>
+        <span>YTD: {fmtPct(it.ytd)}</span>
+      </div>
+
+      {/* Zusatzinfos – jetzt untereinander */}
+      <div className="text-xs opacity-80 mt-2 space-y-1">
+        <div>MC: {fmtUSDabbr(it.marketCap)}</div>
+        <div>P/E: {it.pe != null ? it.pe.toFixed(2) : '–'}</div>
+        <div>Vol: {fmtUSDabbr(it.volume)}</div>
+      </div>
+    </div>
+  ))}
   </div>
 )}
     </main>
