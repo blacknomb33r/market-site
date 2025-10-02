@@ -1,3 +1,4 @@
+console.log("MarketBar mounted");
 'use client';
 import {useEffect, useMemo, useState} from 'react';
 import { DateTime, Duration } from 'luxon';
