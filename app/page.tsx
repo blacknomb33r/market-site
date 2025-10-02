@@ -273,7 +273,7 @@ useEffect(() => { loadWatchlist(); }, []);
 )}
 
 {!wlLoading && wl?.items && (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-3">
     {wl.items.map((it) => (
       <div key={it.ticker} className="card" style={{ padding: '1rem' }}>
         <h2 className="font-bold mb-1">{it.name} ({it.ticker})</h2>

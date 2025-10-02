@@ -30,7 +30,7 @@ class handler(BaseHTTPRequestHandler):
             "Apple": "AAPL",
             "NVIDIA": "NVDA",
             "Tesla": "TSLA",
-            "Auto1": "AG1", 
+            "Auto1": "AG1.DE", 
         }
 
         def series_last(s):
