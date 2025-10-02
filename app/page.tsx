@@ -16,6 +16,30 @@ type ApiResp = {
   items?: Item[];
   error?: string;
 };
+type WLItem = {
+  name: string;
+  ticker: string;
+  price: number | null;
+  delta1d: number | null;
+  marketCap?: number | null;
+  pe?: number | null;
+  volume?: number | null;
+};
+type WLResp = { asOf?: string; items?: WLItem[]; error?: string };
+
+const fmtPct = (x: number | null | undefined) =>
+  x == null ? '–' : `${x > 0 ? '+' : ''}${x.toFixed(2)}%`;
+
+const fmtUSDabbr = (n?: number | null) => {
+  if (n == null) return '–';
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1e12) return `${sign}${(abs/1e12).toFixed(2)}T`;
+  if (abs >= 1e9)  return `${sign}${(abs/1e9).toFixed(2)}B`;
+  if (abs >= 1e6)  return `${sign}${(abs/1e6).toFixed(2)}M`;
+  if (abs >= 1e3)  return `${sign}${(abs/1e3).toFixed(2)}K`;
+  return `${sign}${abs.toFixed(0)}`;
+};
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
@@ -66,6 +90,25 @@ const [autoRefresh, setAutoRefresh] = useState<boolean>(() => {
   return v ? v === 'true' : true; // standard: an
 });
 const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+const [wl, setWl] = useState<WLResp | null>(null);
+const [wlErr, setWlErr] = useState<string | null>(null);
+const [wlLoading, setWlLoading] = useState<boolean>(true);
+
+async function loadWatchlist() {
+  setWlLoading(true);
+  setWlErr(null);
+  try {
+    const res = await fetch(`${API_BASE}/api/watchlist`, { cache: 'no-store' });
+    const j: WLResp = await res.json();
+    if (!res.ok || j.error) throw new Error(j.error || `HTTP ${res.status}`);
+    setWl(j);
+  } catch (e: any) {
+    setWlErr(e?.message ?? String(e));
+  } finally {
+    setWlLoading(false);
+  }
+}
 
 async function load() {
     setLoading(true);
@@ -122,6 +165,7 @@ useEffect(() => {
   document.addEventListener('visibilitychange', onVis);
   return () => document.removeEventListener('visibilitychange', onVis);
 }, [lastRefresh]);
+useEffect(() => { loadWatchlist(); }, []);
 
   return (
     <main className="max-w-6xl mx-auto p-4">
@@ -218,6 +262,38 @@ useEffect(() => {
 </p>
 
     <div className="divider"></div>
+    {/* ==== Watchlist ==== */}
+<h2 className="section-title mt-6">Meine Watchlist</h2>
+
+{wlLoading && <p>Lade Watchlist…</p>}
+{wlErr && (
+  <div className="bg-red-100 border border-red-300 text-red-800 p-2 rounded mb-2">
+    Fehler: {wlErr}
+  </div>
+)}
+
+{!wlLoading && wl?.items && (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {wl.items.map((it) => (
+      <div key={it.ticker} className="card" style={{ padding: '1rem' }}>
+        <h2 className="font-bold mb-1">{it.name} ({it.ticker})</h2>
+        <div className="value text-lg">{it.price ?? '–'} USD</div>
+        <div
+          className={`delta ${
+            (it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
+          }`}
+        >
+          {fmtPct(it.delta1d)} (1d)
+        </div>
+        <div className="text-xs opacity-80 mt-2">
+          MC: {fmtUSDabbr(it.marketCap)} | P/E: {it.pe ?? '–'} | Vol: {fmtUSDabbr(it.volume)}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
     </main>
   );
+
+  
 }
