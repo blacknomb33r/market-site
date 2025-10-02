@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true
-  }
+  // optional, aber oft hilfreich:
+  reactStrictMode: true,
+  // output: 'standalone', // optional für Docker
 };
 
 export default nextConfig;
