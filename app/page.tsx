@@ -24,6 +24,7 @@ type WLItem = {
   marketCap?: number | null;
   pe?: number | null;
   volume?: number | null;
+  currency?: string;
 };
 type WLResp = { asOf?: string; items?: WLItem[]; error?: string };
 
@@ -273,11 +274,13 @@ useEffect(() => { loadWatchlist(); }, []);
 )}
 
 {!wlLoading && wl?.items && (
-  <div className="grid grid-cols-1 sm:grid-cols-3">
+  <div className="watchlist-grid">
     {wl.items.map((it) => (
       <div key={it.ticker} className="card" style={{ padding: '1rem' }}>
         <h2 className="font-bold mb-1">{it.name} ({it.ticker})</h2>
-        <div className="value text-lg">{it.price ?? '–'} USD</div>
+        <div className="value text-lg">
+          {it.price != null ? `${it.price} ${it.currency ?? ''}` : '–'}
+        </div>
         <div
           className={`delta ${
             (it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
