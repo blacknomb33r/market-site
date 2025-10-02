@@ -1,0 +1,10 @@
+# Node
+node_modules
+.next
+out
+# Mac
+.DS_Store
+# Python
+__pycache__/
+.venv/
+venv/

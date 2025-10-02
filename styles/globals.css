@@ -1,0 +1,26 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #f8fafc;
+  color: #111;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: white;
+}
+
+.card h2 {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.card .value {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.card .delta {
+  font-size: 0.85rem;
+}
