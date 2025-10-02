@@ -257,12 +257,6 @@ useEffect(() => { loadWatchlist(); }, []);
             })}
             </div>
       )}
-    <p className="mt-3 text-xs opacity-70">
-    Stand: {data?.asOf ?? '–'}
-      {lastRefresh && (
-        <> // {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})} -  Yahoo Finance</>
-    )}
-</p>
 
     <div className="divider"></div>
     {/* ==== Watchlist ==== */}
@@ -312,6 +306,13 @@ useEffect(() => { loadWatchlist(); }, []);
   ))}
   </div>
 )}
+   <p className="mt-3 text-xs opacity-70">
+    Stand: {data?.asOf ?? '–'}
+      {lastRefresh && (
+        <> // {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})} -  Yahoo Finance</>
+    )}
+  </p>
+  <div className="divider"></div>
     </main>
   );
 
