@@ -27,6 +27,9 @@ class handler(BaseHTTPRequestHandler):
         TICKERS = {
             "S&P 500": "^GSPC",
             "DAX": "^GDAXI",
+            "EuroStoxx50": "^STOXX50E",
+            "HangSeng": "^HSI",
+            "Nikkei225": "^N225",
             "WTI Oil": "CL=F",
             "Gold": "GC=F",
             "Bitcoin": "BTC-USD",
@@ -125,7 +128,7 @@ class handler(BaseHTTPRequestHandler):
             items.append({
                 "name": name,
                 "ticker": tk,
-                "value": None if cur is None else round(cur, 4),
+                "value": None if cur is None else round(cur, 2),
                 "delta1d": None if d1  is None else round(d1, 2),
                 "mtd": None if mtd is None else round(mtd, 2),
                 "ytd": None if ytd is None else round(ytd, 2),
