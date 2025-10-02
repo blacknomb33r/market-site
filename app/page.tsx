@@ -303,10 +303,10 @@ useEffect(() => { loadWatchlist(); }, []);
       </div>
 
       {/* Zusatzinfos – jetzt untereinander */}
-      <div className="text-xs opacity-80 mt-2 space-y-1">
-        <div>MC: {fmtUSDabbr(it.marketCap)}</div>
-        <div>P/E: {it.pe != null ? it.pe.toFixed(2) : '–'}</div>
-        <div>Vol: {fmtUSDabbr(it.volume)}</div>
+      <div className="overview-sub mt-1">
+        <span>Δ 1d: <b className={(it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}>{fmtPct(it.delta1d)}</b></span>
+        <span>MTD: {fmtPct(it.mtd)}</span>
+        <span>YTD: {fmtPct(it.ytd)}</span>
       </div>
     </div>
   ))}
