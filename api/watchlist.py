@@ -92,7 +92,8 @@ class handler(BaseHTTPRequestHandler):
                 "delta1d": None if d1 is None else round(d1, 2),
                 "marketCap": mcap,
                 "pe": None if pe is None else float(pe),
-                "volume": vol
+                "volume": vol,
+                "currency": inf.get("currency") if inf else fi.get("currency", "USD"),
             })
 
         return self._send({"asOf": str(date.today()), "items": items},
