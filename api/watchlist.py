@@ -32,9 +32,9 @@ class handler(BaseHTTPRequestHandler):
             "Meta": "META",
             "AMEX": "AXP",
             "Oracle": "ORCL",
-            "Airbus": "1AIR.DE",
+            "Airbus": "1AIR.PA",
             "Tesla": "TSLA",
-            "Auto1": "AG1.PA", 
+            "Auto1": "AG1.DE", 
             
         }
 
