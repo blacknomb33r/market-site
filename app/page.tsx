@@ -309,7 +309,7 @@ useEffect(() => { loadWatchlist(); }, []);
    <p className="mt-3 text-xs opacity-70">
     Stand: {data?.asOf ?? '–'}
       {lastRefresh && (
-        <> // {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})} -  Yahoo Finance</>
+        <> // {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})} -  Yahoo Finance (Verzögert)</>
     )}
   </p>
   <div className="divider"></div>
