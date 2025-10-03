@@ -3,7 +3,7 @@ from http.server import BaseHTTPRequestHandler
 import json
 from datetime import date, datetime, timedelta
 
-ALLOWED_ORIGIN = "*"  # in Prod auf deine Domain einschränken
+ALLOWED_ORIGIN = "*"
 
 class handler(BaseHTTPRequestHandler):
     def _cors(self):
@@ -18,13 +18,9 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            # --- Imports + yfinance-Cachepfad für Serverless ---
-            try:
-                import yfinance as yf
-                import pandas as pd
-            except Exception as e:
-                return self._send({"error": f"Import error: {type(e).__name__}: {e}"}, 500)
-
+            import yfinance as yf
+            import pandas as pd
+            # yfinance Cachepfad in Serverless (schreibbar)
             try:
                 try:
                     from yfinance import set_tz_cache_location
@@ -33,187 +29,180 @@ class handler(BaseHTTPRequestHandler):
                 set_tz_cache_location("/tmp/py-yfinance")
             except Exception:
                 pass
+        except Exception as e:
+            return self._send({"error": f"Import error: {type(e).__name__}: {e}"}, 500)
 
-            # ==== Deine Watchlist ====
-            WATCH = {
-                "Apple": "AAPL",
-                "Microsoft": "MSFT",
-                "NVIDIA": "NVDA",
-                "Amazon": "AMZN",
-                "Alphabet (Class A)": "GOOGL",
-                "Meta": "META",
-                "Tesla": "TSLA",
-                "Auto1 Group": "AG1.DE",  # EUR
-                "Airbus": "AIR.PA",       # EUR
-            }
+        # ==== Watchlist ====
+        WATCH = {
+            "Apple": "AAPL",
+            "Microsoft": "MSFT",
+            "NVIDIA": "NVDA",
+            "Amazon": "AMZN",
+            "Alphabet (Class A)": "GOOGL",
+            "Meta": "META",
+            "Tesla": "TSLA",
+            "Auto1 Group": "AG1.DE",  # EUR
+            "Airbus": "AIR.PA",       # EUR
+        }
 
-            # ---------- Helper wie in quotes.py ----------
-            def close_series(df, tk: str):
-                """Close-Serie aus evtl. MultiIndex-DataFrame ziehen."""
-                try:
-                    if df is None or getattr(df, "empty", True):
-                        return None
-                    if isinstance(df.columns, pd.MultiIndex):
-                        s = df[tk]["Close"]
-                    else:
-                        s = df["Close"]
-                    s = s.dropna().astype(float)
-                    return None if s.empty else s
-                except Exception:
+        # ---- Helpers: Timezone-Utilities ----
+        def to_naive_utc_index(idx):
+            """DatetimeIndex -> UTC -> tz-naiv. Funktioniert für tz-aware & tz-naiv."""
+            dti = pd.to_datetime(idx)
+            try:
+                if getattr(dti, "tz", None) is not None:
+                    # tz-aware -> nach UTC, dann tz-naiv
+                    dti = dti.tz_convert("UTC").tz_localize(None)
+                else:
+                    # tz-naiv -> sicherstellen, dass .tz_localize(None) nicht crasht
+                    # (braucht man eigentlich nicht, aber wir lassen es defensiv.)
+                    dti = dti.tz_localize(None)
+            except Exception:
+                # Fallback: als tz-naiv belassen
+                pass
+            return dti
+
+        def normalize_series_index(s):
+            """Sichere Index-Normalisierung für Vergleiche/Resampling."""
+            if s is None:
+                return None
+            s = s.copy()
+            s.index = to_naive_utc_index(s.index)
+            return s
+
+        # ---- Numerik-Helpers ----
+        def pct(cur, base):
+            if cur is None or base is None or base == 0:
+                return None
+            return (cur - base) / base * 100.0
+
+        def safe_series(s):
+            if s is None:
+                return None
+            try:
+                s = s.dropna().astype(float)
+                if s.empty:
                     return None
+                s = normalize_series_index(s)
+                return s
+            except Exception:
+                return None
 
-            def last(s):
-                return None if s is None or s.empty else float(s.iloc[-1])
-
-            def prev(s, n):
-                if s is None or s.empty or len(s) <= n:
-                    return None
-                return float(s.iloc[-(n+1)])
-
-            def pct(cur, base):
-                if cur is None or base is None or base == 0:
-                    return None
-                return (cur - base) / base * 100.0
-
-            def base_from(series, start_dt):
-                """
-                Robuste Basis am Monats-/Jahresanfang:
-                - auf Tagesfrequenz bringen
-                - forward-fill
-                - Wert am exakten Startdatum nehmen (WE/Feiertage unkritisch)
-                """
-                if series is None or series.empty:
-                    return None
-                s = series.copy()
-                if not isinstance(s.index, pd.DatetimeIndex):
-                    s.index = pd.to_datetime(s.index)
+        def base_from(series, start_dt):
+            """
+            Robuste Basis am Monats-/Jahresanfang:
+            - Index -> UTC tz-naiv
+            - auf Tagesfrequenz + ffill
+            - exakter Wert am Startdatum (WE/Feiertage egal)
+            """
+            if series is None:
+                return None
+            try:
+                s = normalize_series_index(series)
                 s = s.asfreq("D", method="ffill")
-                ts = pd.Timestamp(start_dt).normalize()
+                ts = pd.Timestamp(start_dt)  # tz-naiv
+                # Falls Start vor Serienbeginn liegt: ersten Wert nehmen
                 if ts < s.index[0]:
                     return float(s.iloc[0])
+                # Startdatum sicherstellen & ffill
                 s2 = s.reindex(s.index.union([ts])).sort_index().ffill()
+                return float(s2.loc[ts])
+            except Exception:
                 try:
-                    return float(s2.loc[ts])
+                    return float(series.iloc[0])
                 except Exception:
-                    return float(s.iloc[0])
+                    return None
 
-            # ---------- Zeitfenster ----------
-            today = date.today()
-            start_ytd = datetime(today.year, 1, 1)
-            start_mtd = datetime(today.year, today.month, 1)
-            end_dt = today + timedelta(days=1)
+        def last(s):
+            return None if s is None or s.empty else float(s.iloc[-1])
 
-            tickers = list(WATCH.values())
+        def prev(s, n):
+            if s is None or s.empty or len(s) <= n:
+                return None
+            return float(s.iloc[-(n + 1)])
 
-            # ---------- Batch-Download wie in quotes.py (YTD + 7d) ----------
+        # ---- Zeitfenster (tz-naiv Datetimes) ----
+        today = date.today()
+        start_ytd = datetime(today.year, 1, 1)
+        start_mtd = datetime(today.year, today.month, 1)
+
+        items = []
+        for name, tk in WATCH.items():
             try:
-                df_ytd = yf.download(
-                    tickers=tickers,
-                    start=start_ytd.isoformat(),
-                    end=end_dt.isoformat(),
-                    interval="1d",
-                    auto_adjust=True,
-                    group_by="ticker",
-                    threads=True,
-                    progress=False,
-                )
-                df_7d = yf.download(
-                    tickers=tickers,
-                    period="7d",
-                    interval="1d",
-                    auto_adjust=True,
-                    group_by="ticker",
-                    threads=True,
-                    progress=False,
-                )
-            except Exception as e:
-                return self._send({"error": f"Download error: {type(e).__name__}: {e}"}, 502)
+                t = yf.Ticker(tk)
 
-            items = []
-            for name, tk in WATCH.items():
-                try:
-                    # Historien
-                    s_ytd = close_series(df_ytd, tk)
-                    s_7d  = close_series(df_7d, tk)
-
-                    # Fallback: Einzelabruf, falls Batch leer
-                    if (s_ytd is None) or (s_7d is None):
-                        try:
-                            t_single = yf.Ticker(tk)
-                            h1 = t_single.history(period="1y", interval="1d", auto_adjust=True)
-                            if s_ytd is None and not h1.empty:
-                                s_ytd = h1["Close"].dropna().astype(float)
-                            h7 = t_single.history(period="7d", interval="1d", auto_adjust=True)
-                            if s_7d is None and not h7.empty:
-                                s_7d = h7["Close"].dropna().astype(float)
-                        except Exception:
-                            pass
-
-                    cur = last(s_7d if s_7d is not None else s_ytd)
-                    p1d = prev(s_7d if s_7d is not None else s_ytd, 1)
-                    d1  = pct(cur, p1d)
-
-                    m_base = base_from(s_ytd, start_mtd)
-                    y_base = base_from(s_ytd, start_ytd)
-                    mtd = pct(cur, m_base) if cur is not None and m_base is not None else None
-                    ytd = pct(cur, y_base) if cur is not None and y_base is not None else None
-
-                    # -------- Zusatzinfos (Currency, MC, P/E, Vol) --------
-                    currency = ""
-                    market_cap = pe = volume = None
-                    try:
-                        t = yf.Ticker(tk)
-
-                        # fast_info (schnell)
-                        fi = getattr(t, "fast_info", None)
-                        if fi:
-                            # Namespace (neue yfinance) ODER dict (alte)
-                            def get_fi(key):
-                                return getattr(fi, key) if not isinstance(fi, dict) else fi.get(key)
-                            currency   = get_fi("currency") or currency
-                            market_cap = market_cap or get_fi("market_cap")
-                            volume     = volume or get_fi("regular_market_volume") or get_fi("ten_day_average_volume")
-                            pe         = pe or get_fi("trailing_pe")
-
-                        # info (fallback, langsamer)
-                        info = t.info or {}
-                        if not currency:                  currency   = info.get("currency", "")
-                        if market_cap is None:           market_cap = info.get("marketCap")
-                        if volume is None:               volume     = info.get("volume") or info.get("averageVolume") or info.get("averageDailyVolume10Day")
-                        if pe is None:                   pe         = info.get("trailingPE")
-                    except Exception:
-                        pass
-
-                    items.append({
-                        "name": name,
-                        "ticker": tk,
-                        "price": None if cur is None else round(cur, 2),
-                        "delta1d": None if d1 is None else round(d1, 2),
-                        "mtd": None if mtd is None else round(mtd, 2),
-                        "ytd": None if ytd is None else round(ytd, 2),
-                        "currency": currency or "",
-                        "marketCap": None if market_cap is None else float(market_cap),
-                        "pe": None if pe is None else float(pe),
-                        "volume": None if volume is None else float(volume),
-                    })
-                except Exception as e_item:
+                # 1y Daily Close-Historie (robuster als Batch)
+                h1y = t.history(period="1y", interval="1d", auto_adjust=True)
+                s = safe_series(h1y["Close"] if "Close" in h1y.columns else None)
+                if s is None or len(s) < 2:
                     items.append({
                         "name": name, "ticker": tk,
                         "price": None, "delta1d": None, "mtd": None, "ytd": None,
                         "currency": "", "marketCap": None, "pe": None, "volume": None,
-                        "error": f"{type(e_item).__name__}: {e_item}",
+                        "error": "no_series_or_too_short"
                     })
+                    continue
 
-            return self._send(
-                {"asOf": str(today), "items": items},
-                200,
-                cache="s-maxage=60, stale-while-revalidate=300"
-            )
+                cur = float(s.iloc[-1])
+                prev1d = float(s.iloc[-2]) if len(s) >= 2 else None
+                d1 = pct(cur, prev1d)
 
-        except Exception as e_outer:
-            return self._send({"error": f"Unhandled: {type(e_outer).__name__}: {e_outer}"}, 500)
+                # MTD / YTD Basen robust bestimmen
+                m_base = base_from(s, start_mtd)
+                y_base = base_from(s, start_ytd)
+                mtd = pct(cur, m_base) if m_base is not None else None
+                ytd = pct(cur, y_base) if y_base is not None else None
 
-    # ---------- helpers ----------
+                # Fundamentals/Currency
+                currency = ""
+                market_cap = pe = volume = None
+                try:
+                    fi = getattr(t, "fast_info", None)
+                    if fi:
+                        def get_fi(key):
+                            return getattr(fi, key) if not isinstance(fi, dict) else fi.get(key)
+                        currency   = get_fi("currency") or currency
+                        market_cap = market_cap or get_fi("market_cap")
+                        volume     = volume or get_fi("regular_market_volume") or get_fi("ten_day_average_volume")
+                        pe         = pe or get_fi("trailing_pe")
+                except Exception:
+                    pass
+                if market_cap is None or volume is None or pe is None or not currency:
+                    try:
+                        info = t.info or {}
+                        currency   = currency or info.get("currency", "")
+                        market_cap = market_cap or info.get("marketCap")
+                        volume     = volume or info.get("volume") or info.get("averageVolume") or info.get("averageDailyVolume10Day")
+                        pe         = pe or info.get("trailingPE")
+                    except Exception:
+                        pass
+
+                items.append({
+                    "name": name,
+                    "ticker": tk,
+                    "price": round(cur, 2),
+                    "delta1d": None if d1 is None else round(d1, 2),
+                    "mtd": None if mtd is None else round(mtd, 2),
+                    "ytd": None if ytd is None else round(ytd, 2),
+                    "currency": currency or "",
+                    "marketCap": None if market_cap is None else float(market_cap),
+                    "pe": None if pe is None else float(pe),
+                    "volume": None if volume is None else float(volume),
+                })
+            except Exception as e_item:
+                items.append({
+                    "name": name, "ticker": tk,
+                    "price": None, "delta1d": None, "mtd": None, "ytd": None,
+                    "currency": "", "marketCap": None, "pe": None, "volume": None,
+                    "error": f"{type(e_item).__name__}: {e_item}",
+                })
+
+        return self._send(
+            {"asOf": str(today), "items": items},
+            200,
+            cache="s-maxage=60, stale-while-revalidate=300"
+        )
+
     def _send(self, body: dict, status: int, cache: str | None = None):
         data = json.dumps(body).encode()
         self.send_response(status)
