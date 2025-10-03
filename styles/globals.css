@@ -238,3 +238,12 @@ a:hover { text-decoration: underline; }
 .watchlist-card .text-xs {
   font-size: 0.7rem;
 }
+
+/* Watchlist: 1 Zeile für Δ 1d / MTD / YTD */
+.watchlist-card .overview-sub {
+  display: flex;
+  flex-direction: row;           /* <- wieder nebeneinander */
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}

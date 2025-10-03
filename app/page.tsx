@@ -275,50 +275,52 @@ useEffect(() => { loadWatchlist(); }, []);
 
 {!wlLoading && wl?.items && (
   <div className="watchlist-grid">
-  {wl.items.map((it) => (
-    <div key={it.ticker} className="card" style={{ padding: '1rem' }}>
-      <h2 className="font-bold mb-1">
-        {it.name} ({it.ticker})
-      </h2>
+    {wl.items.map((it) => {
+      const d1  = it.delta1d;
+      const mtd = it.mtd;
+      const ytd = it.ytd;
+      const priceText =
+        it.price != null ? `${it.price.toFixed(2)} ${it.currency ?? ''}` : '–';
 
-      {/* Preis mit Währung */}
-      <div className="value text-lg">
-        {it.price != null ? `${it.price.toFixed(2)} ${it.currency ?? ''}` : '–'}
-      </div>
+      return (
+        <div key={it.ticker} className="watchlist-card">
+          <h2 className="overview-title">
+            {it.name} ({it.ticker})
+          </h2>
 
-      {/* Deltas */}
-      <div className="overview-sub mt-1">
-        <span>
-          Δ 1d:{' '}
-          <b
-            className={(it.delta1d ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}
-          >
-            {fmtPct(it.delta1d)}
-          </b>
-        </span>
-        <span>MTD: {fmtPct(it.mtd)}</span>
-        <span>YTD: {fmtPct(it.ytd)}</span>
-      </div>
+          <div className="overview-value">{priceText}</div>
 
-      {/* Zusatzinfos – jetzt untereinander */}
-      <div className="text-xs opacity-80 mt-2 space-y-1">
-        <div>MC: {fmtUSDabbr(it.marketCap)}</div>
-        <div>P/E: {it.pe != null ? it.pe.toFixed(2) : '–'}</div>
-        <div>Vol: {fmtUSDabbr(it.volume)}</div>
-      </div>
-    </div>
-  ))}
+          {/* Δ1d / MTD / YTD untereinander */}
+          <div className="overview-sub">
+            <span>
+              Δ 1d:{' '}
+              <b className={(d1 ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}>
+                {fmtPct(d1)}
+              </b>
+            </span>
+            <span>MTD: {fmtPct(mtd)}</span>
+            <span>YTD: {fmtPct(ytd)}</span>
+          </div>
+
+          {/* Zusatzinfos – untereinander */}
+          <div className="text-xs opacity-80 mt-2 space-y-1">
+            <div>MC: {fmtUSDabbr(it.marketCap)}</div>
+            <div>P/E: {it.pe != null ? it.pe.toFixed(2) : '–'}</div>
+            <div>Vol: {fmtUSDabbr(it.volume)}</div>
+          </div>
+        </div>
+      );
+    })}
   </div>
 )}
-   <p className="mt-3 text-xs opacity-70">
-    Stand: {data?.asOf ?? '–'}
-      {lastRefresh && (
-        <> // {lastRefresh.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})} -  Yahoo Finance</>
-    )}
-  </p>
-  <div className="divider"></div>
-    </main>
-  );
+<p className="mt-3 text-xs opacity-70">
+  Stand: {data?.asOf ?? '–'}
+  {lastRefresh && (
+    <> — {lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · Yahoo Finance</>
+  )}
+</p>
 
-  
+<div className="divider"></div>
+</main>
+  );
 }
