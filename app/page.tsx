@@ -98,52 +98,56 @@ const [wl, setWl] = useState<WLResp | null>(null);
 const [wlErr, setWlErr] = useState<string | null>(null);
 const [wlLoading, setWlLoading] = useState<boolean>(true);
 
+async function fetchJSON<T = any>(url: string): Promise<T> {
+  const res = await fetch(url, { cache: 'no-store' });
+  const text = await res.text(); // nur 1x Body lesen
+
+  let data: any = null;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = null;
+  }
+
+  if (!res.ok || (data && data.error)) {
+    const msg =
+      (data && data.error) ||
+      `HTTP ${res.status} ${res.statusText} :: ${text.slice(0, 200)}`;
+    throw new Error(msg);
+  }
+  if (!data) {
+    throw new Error(`Leere oder ungültige Antwort: ${text.slice(0, 200)}`);
+  }
+  return data as T;
+}
+
+async function load() {
+  setLoading(true);
+  setErr(null);
+  try {
+    const body = await fetchJSON<ApiResp>(`${API_BASE}/api/quotes`);
+    setData(body);
+    setLastRefresh(new Date());
+  } catch (e: any) {
+    console.error('quotes fetch failed:', e);
+    setErr(e?.message ?? String(e));
+  } finally {
+    setLoading(false);
+  }
+}
+
 async function loadWatchlist() {
   setWlLoading(true);
   setWlErr(null);
   try {
-    const res = await fetch(`${API_BASE}/api/watchlist`, { cache: 'no-store' });
-    const j: WLResp = await res.json();
-    if (!res.ok || j.error) throw new Error(j.error || `HTTP ${res.status}`);
-    setWl(j);
+    const body = await fetchJSON<WLResp>(`${API_BASE}/api/watchlist`);
+    setWl(body);
   } catch (e: any) {
     setWlErr(e?.message ?? String(e));
   } finally {
     setWlLoading(false);
   }
 }
-
-async function load() {
-    setLoading(true);
-    setErr(null);
-    try {
-      const url = `${API_BASE}/api/quotes`; // lokal: absolute URL nach Vercel, prod: /api/quotes
-      const res = await fetch(url, { cache: 'no-store' });
-
-      // Versuche erst JSON; wenn das scheitert, lies Text und zeige ihn an
-      let body: ApiResp | null = null;
-      let raw = '';
-      try {
-        body = await res.json();
-      } catch {
-        raw = await res.text(); // HTML-Fehlerseite o.ä.
-      }
-
-      if (!res.ok || (body && (body as any).error)) {
-        const msg = (body && (body as any).error) || `HTTP ${res.status} ${res.statusText} ${raw?.slice(0,200)}`;
-        throw new Error(msg);
-      }
-
-      if (!body) throw new Error(`Leere Antwort: ${raw?.slice(0,200)}`);
-      setData(body);
-      setLastRefresh(new Date());   // NEU
-    } catch (e: any) {
-      console.error('quotes fetch failed:', e);
-      setErr(e?.message ?? String(e));
-    } finally {
-      setLoading(false);
-    }
-  }
 
 useEffect(() => { load(); }, []);
 useEffect(() => {

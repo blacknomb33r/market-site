@@ -29,8 +29,13 @@ class handler(BaseHTTPRequestHandler):
         WATCH = {
             "Apple": "AAPL",
             "NVIDIA": "NVDA",
+            "Meta": "META",
+            "AMEX": "AXP",
+            "Oracle": "ORCL",
+            "Airbus": "1AIR.DE",
             "Tesla": "TSLA",
             "Auto1": "AG1.DE", 
+            
         }
 
         def series_last(s):
