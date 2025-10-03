@@ -34,7 +34,7 @@ class handler(BaseHTTPRequestHandler):
             "Oracle": "ORCL",
             "Airbus": "1AIR.DE",
             "Tesla": "TSLA",
-            "Auto1": "AG1.DE", 
+            "Auto1": "AG1.PA", 
             
         }
 
