@@ -271,7 +271,7 @@ useEffect(() => { loadWatchlist(); }, []);
 
 {!wlLoading && wl?.items && (
   <div className="watchlist-grid">
-  {wl.items.map((it) => (
+  {[...wl.items].sort((a, b) => (b.marketCap ?? 0) - (a.marketCap ?? 0)).map((it) => (
     <div key={it.ticker} className="card" style={{ padding: '1rem' }}>
       <h2 className="font-bold mb-1">
         {it.name} ({it.ticker})
