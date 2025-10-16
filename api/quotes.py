@@ -166,6 +166,9 @@ class handler(BaseHTTPRequestHandler):
                     currency = "GBP"
                 elif tk.endswith(".SW"):
                     currency = "CHF"
+            # Final safeguard: Futures default to USD if still empty
+            if not currency and tk.endswith("=F"):
+                currency = "USD"
 
             items.append({
                 "name": name,
