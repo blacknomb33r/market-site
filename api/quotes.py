@@ -62,6 +62,17 @@ class handler(BaseHTTPRequestHandler):
                 else:
                     s = df["Close"]
                 s = s.dropna().astype(float)
+                # Index auf tz-naiv normalisieren (UTC -> tz-naiv), damit Vergleiche robust sind
+                s_idx = pd.to_datetime(s.index)
+                try:
+                    if getattr(s_idx, "tz", None) is not None:
+                        s_idx = s_idx.tz_convert("UTC").tz_localize(None)
+                except Exception:
+                    try:
+                        s_idx = s_idx.tz_localize(None)
+                    except Exception:
+                        pass
+                s.index = s_idx
                 return None if s.empty else s
             except Exception:
                 return None
@@ -130,6 +141,32 @@ class handler(BaseHTTPRequestHandler):
                     y_base = float(s1y.iloc[0])
             ytd = pct(cur, y_base) if (cur is not None) else None
 
+            # Currency ermitteln (+ Fallbacks)
+            currency = ""
+            try:
+                tkr = yf.Ticker(tk)
+                fi = getattr(tkr, "fast_info", None)
+                if fi:
+                    currency = (fi.get("currency") if isinstance(fi, dict) else getattr(fi, "currency", "")) or ""
+                if not currency:
+                    info = tkr.info or {}
+                    currency = info.get("currency", "") or ""
+            except Exception:
+                pass
+
+            # Fallbacks: Rohstoffe/Krypto USD; Börsensuffixe für EUR/GBP/CHF
+            if not currency:
+                USD_TICKERS = {"CL=F","BZ=F","GC=F","SI=F","PL=F","HG=F","ALI=F","BTC-USD","ETH-USD"}
+                if tk in USD_TICKERS:
+                    currency = "USD"
+            if not currency:
+                if tk.endswith(".DE") or tk.endswith(".PA") or tk.endswith(".AS") or tk.endswith(".MI") or tk.endswith(".MC"):
+                    currency = "EUR"
+                elif tk.endswith(".L"):
+                    currency = "GBP"
+                elif tk.endswith(".SW"):
+                    currency = "CHF"
+
             items.append({
                 "name": name,
                 "ticker": tk,
@@ -137,6 +174,7 @@ class handler(BaseHTTPRequestHandler):
                 "delta1d": None if d1  is None else round(d1, 2),
                 "mtd": None if mtd is None else round(mtd, 2),
                 "ytd": None if ytd is None else round(ytd, 2),
+                "currency": currency,
             })
 
         body = {"asOf": str(today), "items": items}
